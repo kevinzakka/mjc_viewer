@@ -16,23 +16,23 @@ _MJCF_PATH = _HERE / "mjcf"
 
 @dataclass(frozen=True)
 class Args:
-    out_path: str
+    out_filename: str
     noisy_ctrl: bool = False
     duration: float = 1.0
 
 
 def load_ant() -> Tuple[mujoco.MjModel, AssetsDict]:
-    model = mujoco.MjModel.from_xml_path(str(_MJCF_PATH / "./ant.xml"))
+    model = mujoco.MjModel.from_xml_path(str(_MJCF_PATH / "ant.xml"))
     return model, None
 
 
 def load_half_cheetah() -> Tuple[mujoco.MjModel, AssetsDict]:
-    model = mujoco.MjModel.from_xml_path(str(_MJCF_PATH / "./half_cheetah.xml"))
+    model = mujoco.MjModel.from_xml_path(str(_MJCF_PATH / "half_cheetah.xml"))
     return model, None
 
 
 def load_humanoid() -> Tuple[mujoco.MjModel, AssetsDict]:
-    model = mujoco.MjModel.from_xml_path(str(_MJCF_PATH / "./humanoid.xml"))
+    model = mujoco.MjModel.from_xml_path(str(_MJCF_PATH / "humanoid.xml"))
     return model, None
 
 
@@ -53,7 +53,7 @@ def main(args: Args) -> None:
         quaternions.append(data.xquat.copy())
 
     # Dump as an HTML file.
-    with open(Path(args.out_path) / "test.html", "w") as f:
+    with open(args.out_filename, "w") as f:
         f.write(serializer.render(positions, quaternions))
 
 
