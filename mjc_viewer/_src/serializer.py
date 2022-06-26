@@ -200,7 +200,6 @@ class Serializer:
                 else:
                     if geoms[0].type == "plane":
                         _body.name = "ground"
-        print(f"Adding body {_body.name}")
 
         for geom in geoms:
             if geom.type is None:

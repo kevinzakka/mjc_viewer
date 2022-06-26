@@ -1,6 +1,15 @@
 # mjc_viewer
 
-`mjc_viewer` is a browser-based 3D viewer that can render static trajectories from JSON.
+[![PyPI Python Version][pypi-versions-badge]][pypi]
+[![PyPI version][pypi-badge]][pypi]
+
+[pypi-versions-badge]: https://img.shields.io/pypi/pyversions/mjc_viewer
+[pypi-badge]: https://badge.fury.io/py/mjc_viewer.svg
+[pypi]: https://pypi.org/project/mjc_viewer/
+
+`mjc_viewer` is a browser-based 3D viewer for [MuJoCo](https://mujoco.org/) that can render static trajectories from JSON.
+
+Click on this Colab to see it in action: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kevinzakka/mjc_viewer/blob/master/tutorial.ipynb)
 
 ## Installation
 
