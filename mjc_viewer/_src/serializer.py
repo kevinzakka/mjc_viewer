@@ -40,7 +40,7 @@ _HTML = """
     </script>
     <div id="mujoco-viewer"></div>
     <script type="module">
-      import {Viewer} from 'https://cdn.jsdelivr.net/gh/kevinzakka/mjc_viewer@main/mjc_viewer/js/viewer.js';
+      import {Viewer} from 'https://cdn.jsdelivr.net/gh/kevinzakka/mjc_viewer@main/mjc_viewer/_src/js/viewer.js';
       const domElement = document.getElementById('mujoco-viewer');
       var viewer = new Viewer(domElement, system);
     </script>
