@@ -1,7 +1,7 @@
 import json
 import tempfile
 from pathlib import Path
-from typing import Any, Mapping, Optional, Sequence
+from typing import Any, Mapping, Optional, Tuple
 
 import mujoco
 import numpy as np
@@ -11,10 +11,9 @@ from dm_control.mjcf.traversal_utils import commit_defaults
 from dm_robotics.transformations import transformations as tr
 from google.protobuf import json_format
 
-from mjc_viewer._src import config_pb2
+from mjc_viewer._src import config_pb2, trajectory
 
-MjcfElement = Any
-ProtoCollider = config_pb2.Collider
+MjcfElement = mjcf.element._ElementImpl
 
 _DEFAULT_GEOM_TYPE = "sphere"
 
@@ -49,7 +48,9 @@ _HTML = """
 """
 
 
-def _pos_quat_from_model(name: str, model: mujoco.MjModel) -> np.ndarray:
+def _pos_quat_from_model(
+    name: str, model: mujoco.MjModel
+) -> Tuple[np.ndarray, np.ndarray]:
     geom_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_GEOM, name)
     geom_pos = model.geom_pos[geom_id]
     geom_quat = model.geom_quat[geom_id]
@@ -60,7 +61,7 @@ def _quat_to_euler_degrees(quat: np.ndarray) -> np.ndarray:
     return tr.quat_to_euler(quat) * 180.0 / np.pi
 
 
-def _parse_sphere(sphere: MjcfElement, model: mujoco.MjModel) -> ProtoCollider:
+def _parse_sphere(sphere: MjcfElement, model: mujoco.MjModel) -> config_pb2.Collider:
     if sphere.size is None:
         commit_defaults(sphere)
     radius = sphere.size[0]
@@ -73,7 +74,7 @@ def _parse_sphere(sphere: MjcfElement, model: mujoco.MjModel) -> ProtoCollider:
 
 def _parse_capsule(
     capsule: MjcfElement, model: mujoco.MjModel, add_radius: bool = True
-) -> ProtoCollider:
+) -> config_pb2.Collider:
     if capsule.size is None:
         commit_defaults(capsule)
     size = capsule.size
@@ -96,7 +97,7 @@ def _parse_capsule(
     )
 
 
-def _parse_box(box: MjcfElement, model: mujoco.MjModel) -> ProtoCollider:
+def _parse_box(box: MjcfElement, model: mujoco.MjModel) -> config_pb2.Collider:
     if box.size is None:
         commit_defaults(box)
     size = box.size
@@ -111,11 +112,13 @@ def _parse_box(box: MjcfElement, model: mujoco.MjModel) -> ProtoCollider:
     )
 
 
-def _parse_cylinder(cylinder: MjcfElement, model: mujoco.MjModel) -> ProtoCollider:
+def _parse_cylinder(
+    cylinder: MjcfElement, model: mujoco.MjModel
+) -> config_pb2.Collider:
     return _parse_capsule(cylinder, model, False)
 
 
-def _parse_mesh(mesh: MjcfElement, model: mujoco.MjModel) -> ProtoCollider:
+def _parse_mesh(mesh: MjcfElement, model: mujoco.MjModel) -> config_pb2.Collider:
     geom_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_MESH, mesh.mesh.name)
     position = model.geom_pos[geom_id]
     quat = model.geom_quat[geom_id]
@@ -130,12 +133,12 @@ def _parse_mesh(mesh: MjcfElement, model: mujoco.MjModel) -> ProtoCollider:
     )
 
 
-def _parse_plane(plane: MjcfElement, model: mujoco.MjModel) -> ProtoCollider:
+def _parse_plane(plane: MjcfElement, model: mujoco.MjModel) -> config_pb2.Collider:
     del plane, model  # Unused.
     return config_pb2.Collider(plane=config_pb2.Collider.Plane())
 
 
-def parse_geom(geom: MjcfElement, model: mujoco.MjModel) -> ProtoCollider:
+def parse_geom(geom: MjcfElement, model: mujoco.MjModel) -> config_pb2.Collider:
     if geom.type == "box":
         return _parse_box(geom, model)
     elif geom.type == "sphere":
@@ -218,16 +221,11 @@ class Serializer:
     def config(self) -> config_pb2.Config:
         return self._config
 
-    def render(
-        self,
-        positions: Sequence[np.ndarray],
-        quaternions: Sequence[np.ndarray],
-        height: int = 480,
-    ) -> str:
+    def render(self, trajectory: trajectory.Trajectory, height: int = 480) -> str:
         d = {
             "config": json_format.MessageToDict(self.config, True),
-            "pos": [pos.tolist() for pos in positions],
-            "rot": [quat.tolist() for quat in quaternions],
+            "pos": [pos.tolist() for pos in trajectory.positions],
+            "rot": [quat.tolist() for quat in trajectory.rotations],
         }
         system = json.dumps(d)
         html = _HTML.replace("<!-- system json goes here -->", system)
