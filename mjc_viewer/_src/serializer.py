@@ -156,7 +156,7 @@ def parse_geom(geom: MjcfElement, model: mujoco.MjModel) -> config_pb2.Collider:
 
 
 class Serializer:
-    """Serializes a MuJoCo model as a protobuf."""
+    """Serializes a MuJoCo model to a protocol buffer."""
 
     def __init__(
         self,

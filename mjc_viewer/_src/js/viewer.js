@@ -62,7 +62,6 @@
      } else if (system.config.frozen?.position?.y) {
        this.camera.position.set(0, 1, 2);
      } else {
-       console.log("FIXED POSITION");
        this.camera.position.set(5, 2, 8);
      }
      this.camera.follow = true;
