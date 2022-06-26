@@ -1,4 +1,3 @@
 __pycache__/
 *.egg-info/
-play.py
-traj.html
+temp/

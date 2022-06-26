@@ -13,9 +13,11 @@ from google.protobuf import json_format
 
 from mjc_viewer._src import config_pb2, trajectory
 
-MjcfElement = mjcf.element._ElementImpl
+# TODO(kevin): Fix mypy errors.
+MjcfElement = Any
 
 _DEFAULT_GEOM_TYPE = "sphere"
+_IDENTITY_QUAT = np.array([1.0, 0, 0, 0])
 
 _HTML = """
 <html>
@@ -48,13 +50,51 @@ _HTML = """
 """
 
 
+def _is_worldbody(body: MjcfElement) -> bool:
+    return body.tag == constants.WORLDBODY
+
+
+def _maybe_to_local(pos: np.ndarray, body: MjcfElement) -> np.ndarray:
+    if body.root.compiler.coordinate == "global" and body and not _is_worldbody(body):
+        return pos - body.pos
+    return pos
+
+
+def _maybe_to_radian(angle: np.ndarray, body: MjcfElement) -> np.ndarray:
+    if body.root.compiler.angle == "degrees":
+        return np.radians(angle)
+    return angle
+
+
+def _pos_from_mjcf(elem: MjcfElement) -> np.ndarray:
+    if elem.pos is None:
+        return np.zeros(3)
+    return _maybe_to_local(elem.pos, elem.parent)
+
+
+def _quat_from_mjcf(elem: MjcfElement) -> np.ndarray:
+    if _is_worldbody(elem):
+        return _IDENTITY_QUAT
+    if elem.euler is not None:
+        return tr.euler_to_quat(_maybe_to_radian(elem.euler, elem))
+    if elem.quat is not None:
+        return elem.quat
+    if elem.axisangle is not None:
+        return tr.axisangle_to_quat(elem.axisangle)
+    return _IDENTITY_QUAT
+
+
 def _pos_quat_from_model(
-    name: str, model: mujoco.MjModel
+    elem: MjcfElement, model: mujoco.MjModel
 ) -> Tuple[np.ndarray, np.ndarray]:
-    geom_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_GEOM, name)
-    geom_pos = model.geom_pos[geom_id]
-    geom_quat = model.geom_quat[geom_id]
-    return geom_pos, geom_quat
+    if elem.name is not None:
+        geom_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_GEOM, elem.name)
+        geom_pos = model.geom_pos[geom_id]
+        geom_quat = model.geom_quat[geom_id]
+        return geom_pos, geom_quat
+    pos = _pos_from_mjcf(elem)
+    quat = _quat_from_mjcf(elem)
+    return pos, quat
 
 
 def _quat_to_euler_degrees(quat: np.ndarray) -> np.ndarray:
@@ -65,7 +105,7 @@ def _parse_sphere(sphere: MjcfElement, model: mujoco.MjModel) -> config_pb2.Coll
     if sphere.size is None:
         commit_defaults(sphere)
     radius = sphere.size[0]
-    position, _ = _pos_quat_from_model(sphere.name, model)
+    position, _ = _pos_quat_from_model(sphere, model)
     return config_pb2.Collider(
         sphere=config_pb2.Collider.Sphere(radius=radius),
         position=config_pb2.Vector3(x=position[0], y=position[1], z=position[2]),
@@ -88,7 +128,7 @@ def _parse_capsule(
         length = size[1] * 2
     if add_radius:
         length += 2 * radius
-    position, quat = _pos_quat_from_model(capsule.name, model)
+    position, quat = _pos_quat_from_model(capsule, model)
     rot_euler = _quat_to_euler_degrees(quat)
     return config_pb2.Collider(
         capsule=config_pb2.Collider.Capsule(radius=radius, length=length),
@@ -101,7 +141,7 @@ def _parse_box(box: MjcfElement, model: mujoco.MjModel) -> config_pb2.Collider:
     if box.size is None:
         commit_defaults(box)
     size = box.size
-    position, quat = _pos_quat_from_model(box.name, model)
+    position, quat = _pos_quat_from_model(box, model)
     rot_euler = _quat_to_euler_degrees(quat)
     return config_pb2.Collider(
         box=config_pb2.Collider.Box(

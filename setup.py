@@ -26,6 +26,9 @@ core_requirements = [
     "dm_robotics-transformations",
     "protobuf >= 4.21.2",
 ]
+examples_requirements = [
+    "dcargs >= 0.1.3",
+]
 
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -73,5 +76,8 @@ setup(
     zip_safe=True,
     python_requires=">=3.7",
     install_requires=core_requirements,
+    extras_require={
+        "examples": examples_requirements,
+    },
     classifiers=classifiers,
 )
