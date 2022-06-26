@@ -62,7 +62,7 @@ setup(
     license="MIT",
     license_files=("LICENSE",),
     packages=find_packages(),
-    package_data={f"{name}": ["py.typed"]},
+    package_data={f"{name}": ["py.typed", "_src/js/*.js", "_src/*.proto", "_src/*.py"]},
     zip_safe=True,
     python_requires=">=3.7",
     install_requires=core_requirements,

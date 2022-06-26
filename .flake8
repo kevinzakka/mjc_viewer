@@ -1,6 +1,6 @@
 [flake8]
-exclude = .git,mujoco_viewer/config_pb2.py
-max-line-length = 80
+exclude = .git,config_pb2.py
+max-line-length = 88
 ignore =
     E203,  # whitespace before colon (black default)
     E501,  # line too long (<n> characters)

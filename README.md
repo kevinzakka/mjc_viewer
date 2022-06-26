@@ -12,4 +12,4 @@ pip install --upgrade mujoco_viewer
 
 ## Acknowledgements
 
-`mujoco_viewer` is heavily adapted from [Brax](https://github.com/google/brax)'s javascript viewer, full credit goes to the developers.
+`mujoco_viewer` is heavily adapted from [Brax](https://github.com/google/brax)'s javascript viewer, full credit goes to its developers.
