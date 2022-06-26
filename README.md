@@ -47,6 +47,14 @@ with open("traj.html", "w") as f:
 # `IPython.display.HTML`.
 ```
 
+## Todos
+
+- [ ] Robustify XML parser
+- [ ] Parse colors and materials
+- [ ] Add support for meshes
+- [ ] Make plane rendering match XML file
+- [ ] Someday, make it interactive
+
 ## Acknowledgements
 
 `mjc_viewer` is heavily adapted from [Brax](https://github.com/google/brax)'s javascript viewer, full credit goes to its developers.
