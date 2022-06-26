@@ -6,7 +6,7 @@ import dcargs
 import mujoco
 import numpy as np
 
-from mujoco_viewer import Serializer
+from mjc_viewer import Serializer
 
 AssetsDict = Optional[Dict[str, Any]]
 

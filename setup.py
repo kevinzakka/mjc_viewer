@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 
 _here = Path(__file__).resolve().parent
 
-name = "mujoco_viewer"
+name = "mjc_viewer"
 
 # Reference: https://github.com/patrick-kidger/equinox/blob/main/setup.py
 with open(_here / name / "__init__.py") as f:

@@ -11,7 +11,7 @@ from dm_control.mjcf.traversal_utils import commit_defaults
 from dm_robotics.transformations import transformations as tr
 from google.protobuf import json_format
 
-from mujoco_viewer._src import config_pb2
+from mjc_viewer._src import config_pb2
 
 MjcfElement = Any
 ProtoCollider = config_pb2.Collider
