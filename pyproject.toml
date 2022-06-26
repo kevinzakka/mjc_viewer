@@ -1,0 +1,13 @@
+[tool.black]
+line-length = 88  # Default.
+target-version = ["py38", "py39"]
+exclude = "config_pb2.py"
+
+[tool.isort]
+profile = "black"
+skip_gitignore = true
+single_line_exclusions = ["typing"]
+skip = ["config_pb2.py"]
+
+[tool.mypy]
+ignore_missing_imports = true
