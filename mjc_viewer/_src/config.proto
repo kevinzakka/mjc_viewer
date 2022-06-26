@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package mujoco_js;
+package mjc_viewer;
 
 // A point or scalar value in 3d space.
 message Vector3 {

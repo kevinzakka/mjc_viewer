@@ -13,35 +13,35 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0c\x63onfig.proto\x12\tmujoco_js\"*\n\x07Vector3\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\"a\n\x06\x46rozen\x12$\n\x08position\x18\x01 \x01(\x0b\x32\x12.mujoco_js.Vector3\x12$\n\x08rotation\x18\x02 \x01(\x0b\x32\x12.mujoco_js.Vector3\x12\x0b\n\x03\x61ll\x18\x03 \x01(\x08\"_\n\x04\x42ody\x12\x0c\n\x04name\x18\x01 \x01(\t\x12&\n\tcolliders\x18\x02 \x03(\x0b\x32\x13.mujoco_js.Collider\x12!\n\x06\x66rozen\x18\x03 \x01(\x0b\x32\x11.mujoco_js.Frozen\"\xe3\x04\n\x08\x43ollider\x12$\n\x08position\x18\x01 \x01(\x0b\x32\x12.mujoco_js.Vector3\x12$\n\x08rotation\x18\x02 \x01(\x0b\x32\x12.mujoco_js.Vector3\x12&\n\x03\x62ox\x18\x03 \x01(\x0b\x32\x17.mujoco_js.Collider.BoxH\x00\x12*\n\x05plane\x18\x04 \x01(\x0b\x32\x19.mujoco_js.Collider.PlaneH\x00\x12,\n\x06sphere\x18\x05 \x01(\x0b\x32\x1a.mujoco_js.Collider.SphereH\x00\x12.\n\x07\x63\x61psule\x18\x06 \x01(\x0b\x32\x1b.mujoco_js.Collider.CapsuleH\x00\x12\x32\n\theightMap\x18\x07 \x01(\x0b\x32\x1d.mujoco_js.Collider.HeightMapH\x00\x12(\n\x04mesh\x18\x08 \x01(\x0b\x32\x18.mujoco_js.Collider.MeshH\x00\x12\r\n\x05\x63olor\x18\t \x01(\t\x12\x0e\n\x06hidden\x18\n \x01(\x08\x1a+\n\x03\x42ox\x12$\n\x08halfsize\x18\x01 \x01(\x0b\x32\x12.mujoco_js.Vector3\x1a\x07\n\x05Plane\x1a\x18\n\x06Sphere\x12\x0e\n\x06radius\x18\x01 \x01(\x02\x1a\x36\n\x07\x43\x61psule\x12\x0e\n\x06radius\x18\x01 \x01(\x02\x12\x0e\n\x06length\x18\x02 \x01(\x02\x12\x0b\n\x03\x65nd\x18\x03 \x01(\x05\x1a\'\n\tHeightMap\x12\x0c\n\x04size\x18\x01 \x01(\x02\x12\x0c\n\x04\x64\x61ta\x18\x02 \x03(\x02\x1a#\n\x04Mesh\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05scale\x18\x02 \x01(\x02\x42\x06\n\x04type\"\xb5\x01\n\x0cMeshGeometry\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0c\n\x04path\x18\x02 \x01(\t\x12$\n\x08vertices\x18\x03 \x03(\x0b\x32\x12.mujoco_js.Vector3\x12\r\n\x05\x66\x61\x63\x65s\x18\x04 \x03(\x05\x12*\n\x0evertex_normals\x18\x05 \x03(\x0b\x32\x12.mujoco_js.Vector3\x12(\n\x0c\x66\x61\x63\x65_normals\x18\x06 \x03(\x0b\x32\x12.mujoco_js.Vector3\"\x8a\x01\n\x06\x43onfig\x12\x1f\n\x06\x62odies\x18\x01 \x03(\x0b\x32\x0f.mujoco_js.Body\x12\n\n\x02\x64t\x18\x02 \x01(\x02\x12!\n\x06\x66rozen\x18\x03 \x01(\x0b\x32\x11.mujoco_js.Frozen\x12\x30\n\x0fmesh_geometries\x18\x04 \x03(\x0b\x32\x17.mujoco_js.MeshGeometryb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0c\x63onfig.proto\x12\nmjc_viewer\"*\n\x07Vector3\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\"c\n\x06\x46rozen\x12%\n\x08position\x18\x01 \x01(\x0b\x32\x13.mjc_viewer.Vector3\x12%\n\x08rotation\x18\x02 \x01(\x0b\x32\x13.mjc_viewer.Vector3\x12\x0b\n\x03\x61ll\x18\x03 \x01(\x08\"a\n\x04\x42ody\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\'\n\tcolliders\x18\x02 \x03(\x0b\x32\x14.mjc_viewer.Collider\x12\"\n\x06\x66rozen\x18\x03 \x01(\x0b\x32\x12.mjc_viewer.Frozen\"\xec\x04\n\x08\x43ollider\x12%\n\x08position\x18\x01 \x01(\x0b\x32\x13.mjc_viewer.Vector3\x12%\n\x08rotation\x18\x02 \x01(\x0b\x32\x13.mjc_viewer.Vector3\x12\'\n\x03\x62ox\x18\x03 \x01(\x0b\x32\x18.mjc_viewer.Collider.BoxH\x00\x12+\n\x05plane\x18\x04 \x01(\x0b\x32\x1a.mjc_viewer.Collider.PlaneH\x00\x12-\n\x06sphere\x18\x05 \x01(\x0b\x32\x1b.mjc_viewer.Collider.SphereH\x00\x12/\n\x07\x63\x61psule\x18\x06 \x01(\x0b\x32\x1c.mjc_viewer.Collider.CapsuleH\x00\x12\x33\n\theightMap\x18\x07 \x01(\x0b\x32\x1e.mjc_viewer.Collider.HeightMapH\x00\x12)\n\x04mesh\x18\x08 \x01(\x0b\x32\x19.mjc_viewer.Collider.MeshH\x00\x12\r\n\x05\x63olor\x18\t \x01(\t\x12\x0e\n\x06hidden\x18\n \x01(\x08\x1a,\n\x03\x42ox\x12%\n\x08halfsize\x18\x01 \x01(\x0b\x32\x13.mjc_viewer.Vector3\x1a\x07\n\x05Plane\x1a\x18\n\x06Sphere\x12\x0e\n\x06radius\x18\x01 \x01(\x02\x1a\x36\n\x07\x43\x61psule\x12\x0e\n\x06radius\x18\x01 \x01(\x02\x12\x0e\n\x06length\x18\x02 \x01(\x02\x12\x0b\n\x03\x65nd\x18\x03 \x01(\x05\x1a\'\n\tHeightMap\x12\x0c\n\x04size\x18\x01 \x01(\x02\x12\x0c\n\x04\x64\x61ta\x18\x02 \x03(\x02\x1a#\n\x04Mesh\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05scale\x18\x02 \x01(\x02\x42\x06\n\x04type\"\xb8\x01\n\x0cMeshGeometry\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0c\n\x04path\x18\x02 \x01(\t\x12%\n\x08vertices\x18\x03 \x03(\x0b\x32\x13.mjc_viewer.Vector3\x12\r\n\x05\x66\x61\x63\x65s\x18\x04 \x03(\x05\x12+\n\x0evertex_normals\x18\x05 \x03(\x0b\x32\x13.mjc_viewer.Vector3\x12)\n\x0c\x66\x61\x63\x65_normals\x18\x06 \x03(\x0b\x32\x13.mjc_viewer.Vector3\"\x8d\x01\n\x06\x43onfig\x12 \n\x06\x62odies\x18\x01 \x03(\x0b\x32\x10.mjc_viewer.Body\x12\n\n\x02\x64t\x18\x02 \x01(\x02\x12\"\n\x06\x66rozen\x18\x03 \x01(\x0b\x32\x12.mjc_viewer.Frozen\x12\x31\n\x0fmesh_geometries\x18\x04 \x03(\x0b\x32\x18.mjc_viewer.MeshGeometryb\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'config_pb2', globals())
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
-  _VECTOR3._serialized_start=27
-  _VECTOR3._serialized_end=69
-  _FROZEN._serialized_start=71
-  _FROZEN._serialized_end=168
-  _BODY._serialized_start=170
-  _BODY._serialized_end=265
-  _COLLIDER._serialized_start=268
-  _COLLIDER._serialized_end=879
-  _COLLIDER_BOX._serialized_start=659
-  _COLLIDER_BOX._serialized_end=702
-  _COLLIDER_PLANE._serialized_start=704
-  _COLLIDER_PLANE._serialized_end=711
-  _COLLIDER_SPHERE._serialized_start=713
-  _COLLIDER_SPHERE._serialized_end=737
-  _COLLIDER_CAPSULE._serialized_start=739
-  _COLLIDER_CAPSULE._serialized_end=793
-  _COLLIDER_HEIGHTMAP._serialized_start=795
-  _COLLIDER_HEIGHTMAP._serialized_end=834
-  _COLLIDER_MESH._serialized_start=836
-  _COLLIDER_MESH._serialized_end=871
-  _MESHGEOMETRY._serialized_start=882
-  _MESHGEOMETRY._serialized_end=1063
-  _CONFIG._serialized_start=1066
-  _CONFIG._serialized_end=1204
+  _VECTOR3._serialized_start=28
+  _VECTOR3._serialized_end=70
+  _FROZEN._serialized_start=72
+  _FROZEN._serialized_end=171
+  _BODY._serialized_start=173
+  _BODY._serialized_end=270
+  _COLLIDER._serialized_start=273
+  _COLLIDER._serialized_end=893
+  _COLLIDER_BOX._serialized_start=672
+  _COLLIDER_BOX._serialized_end=716
+  _COLLIDER_PLANE._serialized_start=718
+  _COLLIDER_PLANE._serialized_end=725
+  _COLLIDER_SPHERE._serialized_start=727
+  _COLLIDER_SPHERE._serialized_end=751
+  _COLLIDER_CAPSULE._serialized_start=753
+  _COLLIDER_CAPSULE._serialized_end=807
+  _COLLIDER_HEIGHTMAP._serialized_start=809
+  _COLLIDER_HEIGHTMAP._serialized_end=848
+  _COLLIDER_MESH._serialized_start=850
+  _COLLIDER_MESH._serialized_end=885
+  _MESHGEOMETRY._serialized_start=896
+  _MESHGEOMETRY._serialized_end=1080
+  _CONFIG._serialized_start=1083
+  _CONFIG._serialized_end=1224
 # @@protoc_insertion_point(module_scope)
