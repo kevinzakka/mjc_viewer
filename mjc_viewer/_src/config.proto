@@ -19,6 +19,21 @@ message Frozen {
   bool all = 3;
 }
 
+message Texture {
+  string type = 1;
+  Vector3 color1 = 2;
+  Vector3 color2 = 3;
+}
+
+message Material {
+  // The color of the material
+  Vector3 color = 1;
+  // The alpha transparency of the material
+  float alpha = 2;
+  // The texture of the material
+  Texture texture = 3;
+}
+
 // Bodies have a rigid shape, mass, and rotational inertia. Bodies may connect
 // to other bodies via joints, forming a kinematic tree.
 message Body {
@@ -37,8 +52,12 @@ message Collider {
     // Half the size of the box in each dimension.
     Vector3 halfsize = 1;
   }
-  // An infinite plane with normal vector (0, 0, 1)
-  message Plane {}
+  // An infinite plane
+  message Plane {
+    Vector3 size = 1;
+    Vector3 position = 2;
+    float repeat = 3;
+  }
   // A sphere
   message Sphere {
     float radius = 1;
@@ -60,13 +79,23 @@ message Collider {
     // the row index is the x-position and the column index is the y-position.
     repeated float data = 2;
   }
-  // A mesh. Currently, only mesh-plane and mesh-capsule collisions are
-  // supported.
+  // A mesh
   message Mesh {
     // Name of the mesh geometry defined in the config.
     string name = 1;
     // Scaling for the mesh.
     float scale = 2;
+  }
+  // An ellipsoid
+  message Ellipsoid {
+    // The radius of the ellipsoid in each dimension.
+    Vector3 radius = 1;
+  }
+  message Cylinder {
+    // Radius of the cylinder
+    float radius = 1;
+    // Length of the cylinder
+    float length = 2;
   }
   // Position relative to parent body
   Vector3 position = 1;
@@ -80,11 +109,13 @@ message Collider {
     Capsule capsule = 6;
     HeightMap heightMap = 7;
     Mesh mesh = 8;
+    Ellipsoid ellipsoid = 9;
+    Cylinder cylinder = 10;
   }
-  // Color of the collider in css notation (e.g. '#ff0000' or 'red')
-  string color = 9;
+  // The material of the collider
+  Material material = 11;
   // A hidden collider is not visualized
-  bool hidden = 10;
+  bool hidden = 12;
 }
 
 // Geometry of a mesh.

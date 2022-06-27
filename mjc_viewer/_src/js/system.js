@@ -1,13 +1,16 @@
 import * as THREE from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r135/build/three.module.js';
 import {ParametricGeometry} from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r135/examples/jsm/geometries/ParametricGeometry.js';
 
-function createCheckerBoard() {
+function createCheckerBoard(color1, color2, repeat, extent) {
     const width = 2;
     const height = 2;
 
     const size = width * height;
     const data = new Uint8Array( 3 * size );
-    const colors = [new THREE.Color( 0x999999 ), new THREE.Color( 0x888888 )];
+
+    const c1 = new THREE.Color(color1.x, color1.y, color1.z);
+    const c2 = new THREE.Color(color2.x, color2.y, color2.z);
+    const colors = [c1, c2];
 
     for ( let i = 0; i < size; i ++ ) {
       const stride = i * 3;
@@ -20,8 +23,13 @@ function createCheckerBoard() {
     const texture = new THREE.DataTexture( data, width, height, THREE.RGBFormat );
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set( 1000, 1000 );
-    return new THREE.MeshStandardMaterial( { map: texture } );
+    console.log(extent);
+    if ((extent.x == 0) || (extent.y == 0)) {
+        texture.repeat.set(2000 * repeat / 2.0, 2000 * repeat / 2.0);
+    } else {
+      texture.repeat.set( extent.x * repeat / 2.0, extent.y * repeat / 2.0);
+    }
+    return new THREE.MeshStandardMaterial({ map: texture } );
 }
 
 function createCapsule(capsule, mat) {
@@ -58,17 +66,41 @@ function createBox(box, mat) {
 }
 
 function createPlane(plane, mat) {
-  const geometry = new THREE.PlaneGeometry( 2000, 2000);
+  let geometry;
+  if ((plane.size.x == 0) || (plane.size.y == 0)) {
+    geometry = new THREE.PlaneGeometry(2000, 2000);
+  } else {
+    geometry = new THREE.PlaneBufferGeometry(plane.size.x, plane.size.y);
+  }
   const mesh = new THREE.Mesh(geometry, mat);
+  mesh.position.set(plane.position.x, plane.position.y, plane.position.z);
   mesh.rotation.x = -Math.PI / 2;
   mesh.receiveShadow = true;
   mesh.baseMaterial = mesh.material;
-
   return mesh;
 }
 
 function createSphere(sphere, mat) {
   const geom = new THREE.SphereGeometry(sphere.radius, 16, 16);
+  const mesh = new THREE.Mesh(geom, mat);
+  mesh.castShadow = true;
+  mesh.baseMaterial = mesh.material;
+  return mesh;
+}
+
+function createEllipsoid(ellipsoid, mat) {
+  const geom = new THREE.SphereGeometry(1.0, 20, 20);
+  geom.applyMatrix4( new THREE.Matrix4().makeScale(
+    ellipsoid.radius.x, ellipsoid.radius.z, ellipsoid.radius.y
+  ));
+  const mesh = new THREE.Mesh(geom, mat);
+  mesh.castShadow = true;
+  mesh.baseMaterial = mesh.material;
+  return mesh;
+}
+
+function createCylinder(cylinder, mat) {
+  const geom = new THREE.CylinderGeometry(cylinder.radius, cylinder.radius, cylinder.length, 32 );
   const mesh = new THREE.Mesh(geom, mat);
   mesh.castShadow = true;
   mesh.baseMaterial = mesh.material;
@@ -127,21 +159,50 @@ function createMesh(mesh_config, geom, mat) {
 function createScene(system) {
   const scene = new THREE.Scene();
   const meshGeoms = {};
-  // system.config.meshGeometries.forEach(function(geom) {
-  //   meshGeoms[geom.name] = geom;
-  // });
+  system.config.meshGeometries.forEach(function(geom) {
+    meshGeoms[geom.name] = geom;
+  });
   system.config.bodies.forEach(function(body) {
     const parent = new THREE.Group();
     parent.name = body.name.replaceAll('/', '_');  // sanitize node name
     body.colliders.forEach(function(collider) {
-      const color = collider.color
-        ? collider.color
-        : body.name.toLowerCase() == 'target' ? '#ff2222' : '#665544';
-      const mat = ('plane' in collider)
-        ? createCheckerBoard()
-        : ('heightMap' in collider)
-          ? new THREE.MeshStandardMaterial({color: color, flatShading: true})
-          : new THREE.MeshPhongMaterial({color: color});
+
+      // Parse the collider material.
+      let mat;
+      if ("material" in collider) {
+        if ("texture" in collider.material) {
+          if (collider.material.texture.type == "checker") {
+            mat = createCheckerBoard(
+              collider.material.texture.color1, collider.material.texture.color2,
+              collider.plane.repeat, collider.plane.size,
+            );
+          } else if (collider.material.texture.type == "flat") {
+            const rgb = collider.material.texture.color1;
+            const color = "#" + new THREE.Color(rgb.x, rgb.y, rgb.z).getHexString();
+            mat = new THREE.MeshPhongMaterial({color: color});
+          }
+        } else {
+          let color;
+          if ("color" in collider.material) {
+            const rgb = collider.material.color;
+            color = "#" + new THREE.Color(rgb.x, rgb.y, rgb.z).getHexString();
+          } else {
+            color = '#665544';
+          }
+          let alpha;
+          if ("alpha" in collider.material) {
+            alpha = collider.material.alpha;
+          } else {
+            alpha = 1;
+          }
+          mat = new THREE.MeshPhongMaterial({color: color});
+          if (alpha > 0.0) {
+            mat.transparent = true;
+            mat.opacity = alpha;
+          }
+        }
+      }
+
       let child;
       if ('box' in collider) {
         child = createBox(collider.box, mat);
@@ -155,6 +216,11 @@ function createScene(system) {
         child = createHeightMap(collider.heightMap, mat);
       } else if ('mesh' in collider) {
         child = createMesh(collider.mesh, meshGeoms[collider.mesh.name], mat);
+      } else if ('ellipsoid' in collider) {
+        child = createEllipsoid(collider.ellipsoid, mat);
+      } else if ('cylinder' in collider) {
+        console.log("PARSING CYLINDEER");
+        child = createCylinder(collider.cylinder, mat);
       }
       if (collider.rotation) {
         // convert from z-up to y-up coordinate system

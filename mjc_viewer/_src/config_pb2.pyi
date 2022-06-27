@@ -56,6 +56,52 @@ class Frozen(google.protobuf.message.Message):
     def ClearField(self, field_name: typing_extensions.Literal["all",b"all","position",b"position","rotation",b"rotation"]) -> None: ...
 global___Frozen = Frozen
 
+class Texture(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+    TYPE_FIELD_NUMBER: builtins.int
+    COLOR1_FIELD_NUMBER: builtins.int
+    COLOR2_FIELD_NUMBER: builtins.int
+    type: typing.Text
+    @property
+    def color1(self) -> global___Vector3: ...
+    @property
+    def color2(self) -> global___Vector3: ...
+    def __init__(self,
+        *,
+        type: typing.Text = ...,
+        color1: typing.Optional[global___Vector3] = ...,
+        color2: typing.Optional[global___Vector3] = ...,
+        ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["color1",b"color1","color2",b"color2"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["color1",b"color1","color2",b"color2","type",b"type"]) -> None: ...
+global___Texture = Texture
+
+class Material(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+    COLOR_FIELD_NUMBER: builtins.int
+    ALPHA_FIELD_NUMBER: builtins.int
+    TEXTURE_FIELD_NUMBER: builtins.int
+    @property
+    def color(self) -> global___Vector3:
+        """The color of the material"""
+        pass
+    alpha: builtins.float
+    """The alpha transparency of the material"""
+
+    @property
+    def texture(self) -> global___Texture:
+        """The texture of the material"""
+        pass
+    def __init__(self,
+        *,
+        color: typing.Optional[global___Vector3] = ...,
+        alpha: builtins.float = ...,
+        texture: typing.Optional[global___Texture] = ...,
+        ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["color",b"color","texture",b"texture"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["alpha",b"alpha","color",b"color","texture",b"texture"]) -> None: ...
+global___Material = Material
+
 class Body(google.protobuf.message.Message):
     """Bodies have a rigid shape, mass, and rotational inertia. Bodies may connect
     to other bodies via joints, forming a kinematic tree.
@@ -104,10 +150,24 @@ class Collider(google.protobuf.message.Message):
         def ClearField(self, field_name: typing_extensions.Literal["halfsize",b"halfsize"]) -> None: ...
 
     class Plane(google.protobuf.message.Message):
-        """An infinite plane with normal vector (0, 0, 1)"""
+        """An infinite plane"""
         DESCRIPTOR: google.protobuf.descriptor.Descriptor
+        SIZE_FIELD_NUMBER: builtins.int
+        POSITION_FIELD_NUMBER: builtins.int
+        REPEAT_FIELD_NUMBER: builtins.int
+        @property
+        def size(self) -> global___Vector3: ...
+        @property
+        def position(self) -> global___Vector3: ...
+        repeat: builtins.float
         def __init__(self,
+            *,
+            size: typing.Optional[global___Vector3] = ...,
+            position: typing.Optional[global___Vector3] = ...,
+            repeat: builtins.float = ...,
             ) -> None: ...
+        def HasField(self, field_name: typing_extensions.Literal["position",b"position","size",b"size"]) -> builtins.bool: ...
+        def ClearField(self, field_name: typing_extensions.Literal["position",b"position","repeat",b"repeat","size",b"size"]) -> None: ...
 
     class Sphere(google.protobuf.message.Message):
         """A sphere"""
@@ -165,9 +225,7 @@ class Collider(google.protobuf.message.Message):
         def ClearField(self, field_name: typing_extensions.Literal["data",b"data","size",b"size"]) -> None: ...
 
     class Mesh(google.protobuf.message.Message):
-        """A mesh. Currently, only mesh-plane and mesh-capsule collisions are
-        supported.
-        """
+        """A mesh"""
         DESCRIPTOR: google.protobuf.descriptor.Descriptor
         NAME_FIELD_NUMBER: builtins.int
         SCALE_FIELD_NUMBER: builtins.int
@@ -184,6 +242,38 @@ class Collider(google.protobuf.message.Message):
             ) -> None: ...
         def ClearField(self, field_name: typing_extensions.Literal["name",b"name","scale",b"scale"]) -> None: ...
 
+    class Ellipsoid(google.protobuf.message.Message):
+        """An ellipsoid"""
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+        RADIUS_FIELD_NUMBER: builtins.int
+        @property
+        def radius(self) -> global___Vector3:
+            """The radius of the ellipsoid in each dimension."""
+            pass
+        def __init__(self,
+            *,
+            radius: typing.Optional[global___Vector3] = ...,
+            ) -> None: ...
+        def HasField(self, field_name: typing_extensions.Literal["radius",b"radius"]) -> builtins.bool: ...
+        def ClearField(self, field_name: typing_extensions.Literal["radius",b"radius"]) -> None: ...
+
+    class Cylinder(google.protobuf.message.Message):
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+        RADIUS_FIELD_NUMBER: builtins.int
+        LENGTH_FIELD_NUMBER: builtins.int
+        radius: builtins.float
+        """Radius of the cylinder"""
+
+        length: builtins.float
+        """Length of the cylinder"""
+
+        def __init__(self,
+            *,
+            radius: builtins.float = ...,
+            length: builtins.float = ...,
+            ) -> None: ...
+        def ClearField(self, field_name: typing_extensions.Literal["length",b"length","radius",b"radius"]) -> None: ...
+
     POSITION_FIELD_NUMBER: builtins.int
     ROTATION_FIELD_NUMBER: builtins.int
     BOX_FIELD_NUMBER: builtins.int
@@ -192,7 +282,9 @@ class Collider(google.protobuf.message.Message):
     CAPSULE_FIELD_NUMBER: builtins.int
     HEIGHTMAP_FIELD_NUMBER: builtins.int
     MESH_FIELD_NUMBER: builtins.int
-    COLOR_FIELD_NUMBER: builtins.int
+    ELLIPSOID_FIELD_NUMBER: builtins.int
+    CYLINDER_FIELD_NUMBER: builtins.int
+    MATERIAL_FIELD_NUMBER: builtins.int
     HIDDEN_FIELD_NUMBER: builtins.int
     @property
     def position(self) -> global___Vector3:
@@ -214,9 +306,14 @@ class Collider(google.protobuf.message.Message):
     def heightMap(self) -> global___Collider.HeightMap: ...
     @property
     def mesh(self) -> global___Collider.Mesh: ...
-    color: typing.Text
-    """Color of the collider in css notation (e.g. '#ff0000' or 'red')"""
-
+    @property
+    def ellipsoid(self) -> global___Collider.Ellipsoid: ...
+    @property
+    def cylinder(self) -> global___Collider.Cylinder: ...
+    @property
+    def material(self) -> global___Material:
+        """The material of the collider"""
+        pass
     hidden: builtins.bool
     """A hidden collider is not visualized"""
 
@@ -230,12 +327,14 @@ class Collider(google.protobuf.message.Message):
         capsule: typing.Optional[global___Collider.Capsule] = ...,
         heightMap: typing.Optional[global___Collider.HeightMap] = ...,
         mesh: typing.Optional[global___Collider.Mesh] = ...,
-        color: typing.Text = ...,
+        ellipsoid: typing.Optional[global___Collider.Ellipsoid] = ...,
+        cylinder: typing.Optional[global___Collider.Cylinder] = ...,
+        material: typing.Optional[global___Material] = ...,
         hidden: builtins.bool = ...,
         ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["box",b"box","capsule",b"capsule","heightMap",b"heightMap","mesh",b"mesh","plane",b"plane","position",b"position","rotation",b"rotation","sphere",b"sphere","type",b"type"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["box",b"box","capsule",b"capsule","color",b"color","heightMap",b"heightMap","hidden",b"hidden","mesh",b"mesh","plane",b"plane","position",b"position","rotation",b"rotation","sphere",b"sphere","type",b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing_extensions.Literal["type",b"type"]) -> typing.Optional[typing_extensions.Literal["box","plane","sphere","capsule","heightMap","mesh"]]: ...
+    def HasField(self, field_name: typing_extensions.Literal["box",b"box","capsule",b"capsule","cylinder",b"cylinder","ellipsoid",b"ellipsoid","heightMap",b"heightMap","material",b"material","mesh",b"mesh","plane",b"plane","position",b"position","rotation",b"rotation","sphere",b"sphere","type",b"type"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["box",b"box","capsule",b"capsule","cylinder",b"cylinder","ellipsoid",b"ellipsoid","heightMap",b"heightMap","hidden",b"hidden","material",b"material","mesh",b"mesh","plane",b"plane","position",b"position","rotation",b"rotation","sphere",b"sphere","type",b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["type",b"type"]) -> typing.Optional[typing_extensions.Literal["box","plane","sphere","capsule","heightMap","mesh","ellipsoid","cylinder"]]: ...
 global___Collider = Collider
 
 class MeshGeometry(google.protobuf.message.Message):

@@ -17,8 +17,10 @@ from mjc_viewer._src import config_pb2, trajectory
 MjcfElement = Any
 
 _DEFAULT_GEOM_TYPE = "sphere"
+_DEFAULT_GEOM_RGBA = np.array([0.5, 0.5, 0.5, 1])
 _IDENTITY_QUAT = np.array([1.0, 0, 0, 0])
 
+# import {Viewer} from 'https://cdn.jsdelivr.net/gh/kevinzakka/mjc_viewer@main/mjc_viewer/_src/js/viewer.js';
 _HTML = """
 <html>
   <head>
@@ -41,7 +43,7 @@ _HTML = """
     </script>
     <div id="mujoco-viewer"></div>
     <script type="module">
-      import {Viewer} from 'https://cdn.jsdelivr.net/gh/kevinzakka/mjc_viewer@main/mjc_viewer/_src/js/viewer.js';
+      import {Viewer} from '../mjc_viewer/_src/js/viewer.js';
       const domElement = document.getElementById('mujoco-viewer');
       var viewer = new Viewer(domElement, system);
     </script>
@@ -109,6 +111,7 @@ def _parse_sphere(sphere: MjcfElement, model: mujoco.MjModel) -> config_pb2.Coll
     return config_pb2.Collider(
         sphere=config_pb2.Collider.Sphere(radius=radius),
         position=config_pb2.Vector3(x=position[0], y=position[1], z=position[2]),
+        material=_parse_material(sphere),
     )
 
 
@@ -134,6 +137,7 @@ def _parse_capsule(
         capsule=config_pb2.Collider.Capsule(radius=radius, length=length),
         rotation=config_pb2.Vector3(x=rot_euler[0], y=rot_euler[1], z=rot_euler[2]),
         position=config_pb2.Vector3(x=position[0], y=position[1], z=position[2]),
+        material=_parse_material(capsule),
     )
 
 
@@ -149,13 +153,8 @@ def _parse_box(box: MjcfElement, model: mujoco.MjModel) -> config_pb2.Collider:
         ),
         rotation=config_pb2.Vector3(x=rot_euler[0], y=rot_euler[1], z=rot_euler[2]),
         position=config_pb2.Vector3(x=position[0], y=position[1], z=position[2]),
+        material=_parse_material(box),
     )
-
-
-def _parse_cylinder(
-    cylinder: MjcfElement, model: mujoco.MjModel
-) -> config_pb2.Collider:
-    return _parse_capsule(cylinder, model, False)
 
 
 def _parse_mesh(mesh: MjcfElement, model: mujoco.MjModel) -> config_pb2.Collider:
@@ -174,8 +173,100 @@ def _parse_mesh(mesh: MjcfElement, model: mujoco.MjModel) -> config_pb2.Collider
 
 
 def _parse_plane(plane: MjcfElement, model: mujoco.MjModel) -> config_pb2.Collider:
-    del plane, model  # Unused.
-    return config_pb2.Collider(plane=config_pb2.Collider.Plane())
+    size = plane.size
+    position, _ = _pos_quat_from_model(plane, model)
+    if plane.material.texrepeat is None:
+        repeat = 1
+    else:
+        repeat = plane.material.texrepeat[0]
+    return config_pb2.Collider(
+        plane=config_pb2.Collider.Plane(
+            size=config_pb2.Vector3(x=size[0] * 2, y=size[1] * 2, z=size[2]),
+            position=config_pb2.Vector3(x=position[0], y=position[1], z=position[2]),
+            repeat=repeat,
+        ),
+        material=_parse_material(plane),
+    )
+
+
+def _parse_ellipsoid(
+    ellipsoid: MjcfElement, model: mujoco.MjModel
+) -> config_pb2.Collider:
+    if ellipsoid.size is None:
+        commit_defaults(ellipsoid)
+    size = ellipsoid.size
+    position, quat = _pos_quat_from_model(ellipsoid, model)
+    rot_euler = _quat_to_euler_degrees(quat)
+    return config_pb2.Collider(
+        ellipsoid=config_pb2.Collider.Ellipsoid(
+            radius=config_pb2.Vector3(x=size[0], y=size[1], z=size[2]),
+        ),
+        rotation=config_pb2.Vector3(x=rot_euler[0], y=rot_euler[1], z=rot_euler[2]),
+        position=config_pb2.Vector3(x=position[0], y=position[1], z=position[2]),
+        material=_parse_material(ellipsoid),
+    )
+
+
+def _parse_cylinder(
+    cylinder: MjcfElement, model: mujoco.MjModel
+) -> config_pb2.Collider:
+    if cylinder.size is None:
+        commit_defaults(cylinder)
+    size = cylinder.size
+    position, quat = _pos_quat_from_model(cylinder, model)
+    rot_euler = _quat_to_euler_degrees(quat)
+    return config_pb2.Collider(
+        cylinder=config_pb2.Collider.Cylinder(
+            radius=size[0],
+            length=size[1] * 2,
+        ),
+        rotation=config_pb2.Vector3(x=rot_euler[0], y=rot_euler[1], z=rot_euler[2]),
+        position=config_pb2.Vector3(x=position[0], y=position[1], z=position[2]),
+        material=_parse_material(cylinder),
+    )
+
+
+def _parse_material(elem: MjcfElement) -> config_pb2.Material:
+    commit_defaults(elem, ["rgba", "material"])
+    if elem.material is not None:
+        color = None
+        if elem.material.rgba is not None:
+            color = elem.material.rgba
+        if elem.material.texture is not None:
+            texture = elem.material.texture
+            if texture.builtin is not None:
+                if texture.builtin == "checker":
+                    return config_pb2.Material(
+                        texture=config_pb2.Texture(
+                            type="checker",
+                            color1=config_pb2.Vector3(
+                                x=texture.rgb1[0], y=texture.rgb1[1], z=texture.rgb1[2]
+                            ),
+                            color2=config_pb2.Vector3(
+                                x=texture.rgb2[0], y=texture.rgb2[1], z=texture.rgb2[2]
+                            ),
+                        ),
+                    )
+                elif texture.builtin == "flat":
+                    if color is None:
+                        color = texture.rgb1
+                    return config_pb2.Material(
+                        texture=config_pb2.Texture(
+                            type="flat",
+                            color1=config_pb2.Vector3(
+                                x=color[0], y=color[1], z=color[2]
+                            ),
+                        ),
+                    )
+    # If no material is specified, it could be that solely an rgba attribute was
+    # specified. If we don't have one, then we'll just assign the default color.
+    rgba = _DEFAULT_GEOM_RGBA if elem.rgba is None else elem.rgba
+    rgb = rgba[0:3]
+    alpha = rgba[3]
+    return config_pb2.Material(
+        color=config_pb2.Vector3(x=rgb[0], y=rgb[1], z=rgb[2]),
+        alpha=alpha,
+    )
 
 
 def parse_geom(geom: MjcfElement, model: mujoco.MjModel) -> config_pb2.Collider:
@@ -191,6 +282,8 @@ def parse_geom(geom: MjcfElement, model: mujoco.MjModel) -> config_pb2.Collider:
         return _parse_mesh(geom, model)
     elif geom.type == "plane":
         return _parse_plane(geom, model)
+    elif geom.type == "ellipsoid":
+        return _parse_ellipsoid(geom, model)
     else:
         raise ValueError(f"Unknown geom type: {geom.type}")
 
