@@ -50,9 +50,10 @@ with open("traj.html", "w") as f:
 ## Todos
 
 - [ ] Robustify XML parser
-- [ ] Parse colors and materials
+- [ ] Parse lights
 - [ ] Add support for meshes
-- [ ] Make plane rendering match XML file
+- [ ] Better default camera / light settings
+- [ ] Figure out plane reflection
 - [ ] Someday, make it interactive
 
 ## Acknowledgements

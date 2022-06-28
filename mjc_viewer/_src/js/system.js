@@ -1,5 +1,4 @@
 import * as THREE from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r135/build/three.module.js';
-import {ParametricGeometry} from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r135/examples/jsm/geometries/ParametricGeometry.js';
 
 function createCheckerBoard(color1, color2, repeat, extent) {
     const width = 2;
@@ -20,15 +19,17 @@ function createCheckerBoard(color1, color2, repeat, extent) {
       data[ stride + 1] = Math.floor( color.g * 255 );
       data[ stride + 2] = Math.floor( color.b * 255 );
     }
+
     const texture = new THREE.DataTexture( data, width, height, THREE.RGBFormat );
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
-    console.log(extent);
+
     if ((extent.x == 0) || (extent.y == 0)) {
-        texture.repeat.set(2000 * repeat / 2.0, 2000 * repeat / 2.0);
+      texture.repeat.set(2000 * repeat / 2.0, 2000 * repeat / 2.0);
     } else {
       texture.repeat.set( extent.x * repeat / 2.0, extent.y * repeat / 2.0);
     }
+
     return new THREE.MeshStandardMaterial({ map: texture } );
 }
 
@@ -57,8 +58,7 @@ function createCapsule(capsule, mat) {
 }
 
 function createBox(box, mat) {
-  const geom = new THREE.BoxBufferGeometry(
-      2 * box.halfsize.x, 2 * box.halfsize.z, 2 * box.halfsize.y);
+  const geom = new THREE.BoxBufferGeometry(2 * box.halfsize.x, 2 * box.halfsize.z, 2 * box.halfsize.y);
   const mesh = new THREE.Mesh(geom, mat);
   mesh.castShadow = true;
   mesh.baseMaterial = mesh.material;
@@ -107,39 +107,12 @@ function createCylinder(cylinder, mat) {
   return mesh;
 }
 
-function createHeightMap(heightMap, mat) {
-  const size = heightMap.size;
-  const n_subdiv = Math.sqrt(heightMap.data.length) - 1;
-
-  if (!Number.isInteger(n_subdiv)) {
-    throw 'The data length for an height map should be a perfect square.';
-  }
-
-  function builder(v, u, target) {
-    const idx = Math.round(v * (n_subdiv) + u * n_subdiv * (n_subdiv + 1));
-    const x = u * size;
-    const y = -v * size;
-    const z = heightMap.data[idx];
-    target.set(x, y, z).multiplyScalar(1);
-  }
-
-  const geom = new ParametricGeometry(builder, n_subdiv, n_subdiv);
-  geom.normalizeNormals();
-
-  const group = new THREE.Group();
-  const mesh = new THREE.Mesh(geom, mat);
-  mesh.rotation.x = -Math.PI / 2;
-  mesh.receiveShadow = true;
-  group.add(mesh);
-  return group;
-}
-
 function createMesh(mesh_config, geom, mat) {
   const bufferGeometry = new THREE.BufferGeometry();
   const vertices = geom.vertices;
   const positions = new Float32Array(vertices.length * 3);
   const scale = mesh_config.scale ? mesh_config.scale : 1;
-  // Convert the coordinate system.
+  // Convert the coordinate system
   vertices.forEach(function(vertice, i) {
       positions[i * 3] = vertice.x * scale;
       positions[i * 3 + 1] = vertice.z * scale;
@@ -156,53 +129,61 @@ function createMesh(mesh_config, geom, mat) {
   return mesh;
 }
 
+function createMaterial(material) {
+  let mat;
+  if ("texture" in material) {
+    if (material.texture.type == "checker") {
+      mat = createCheckerBoard(
+        material.texture.color1,
+        material.texture.color2,
+        material.texture.repeat,
+        material.texture.size,
+      );
+    } else if (material.texture.type == "flat") {
+      const rgb = material.texture.color1;
+      const color = "#" + new THREE.Color(rgb.x, rgb.y, rgb.z).getHexString();
+      mat = new THREE.MeshPhongMaterial({color: color});
+    }
+  } else {
+    let color;
+    if ("color" in material) {
+      const rgb = material.color;
+      color = "#" + new THREE.Color(rgb.x, rgb.y, rgb.z).getHexString();
+    } else {
+      color = '#665544';
+    }
+    let alpha;
+    if ("alpha" in material) {
+      alpha = material.alpha;
+    } else {
+      alpha = 1;
+    }
+    mat = new THREE.MeshPhongMaterial({color: color});
+    if (alpha > 0.0) {
+      mat.transparent = true;
+      mat.opacity = alpha;
+    }
+  }
+  return mat;
+}
+
 function createScene(system) {
   const scene = new THREE.Scene();
+
   const meshGeoms = {};
   system.config.meshGeometries.forEach(function(geom) {
     meshGeoms[geom.name] = geom;
   });
+
   system.config.bodies.forEach(function(body) {
     const parent = new THREE.Group();
     parent.name = body.name.replaceAll('/', '_');  // sanitize node name
+
     body.colliders.forEach(function(collider) {
+      // Parse collider material
+      const mat = createMaterial(collider.material);
 
-      // Parse the collider material.
-      let mat;
-      if ("material" in collider) {
-        if ("texture" in collider.material) {
-          if (collider.material.texture.type == "checker") {
-            mat = createCheckerBoard(
-              collider.material.texture.color1, collider.material.texture.color2,
-              collider.plane.repeat, collider.plane.size,
-            );
-          } else if (collider.material.texture.type == "flat") {
-            const rgb = collider.material.texture.color1;
-            const color = "#" + new THREE.Color(rgb.x, rgb.y, rgb.z).getHexString();
-            mat = new THREE.MeshPhongMaterial({color: color});
-          }
-        } else {
-          let color;
-          if ("color" in collider.material) {
-            const rgb = collider.material.color;
-            color = "#" + new THREE.Color(rgb.x, rgb.y, rgb.z).getHexString();
-          } else {
-            color = '#665544';
-          }
-          let alpha;
-          if ("alpha" in collider.material) {
-            alpha = collider.material.alpha;
-          } else {
-            alpha = 1;
-          }
-          mat = new THREE.MeshPhongMaterial({color: color});
-          if (alpha > 0.0) {
-            mat.transparent = true;
-            mat.opacity = alpha;
-          }
-        }
-      }
-
+      // Parse collider geometry
       let child;
       if ('box' in collider) {
         child = createBox(collider.box, mat);
@@ -212,20 +193,18 @@ function createScene(system) {
         child = createPlane(collider.plane, mat);
       } else if ('sphere' in collider) {
         child = createSphere(collider.sphere, mat);
-      } else if ('heightMap' in collider) {
-        child = createHeightMap(collider.heightMap, mat);
       } else if ('mesh' in collider) {
         child = createMesh(collider.mesh, meshGeoms[collider.mesh.name], mat);
       } else if ('ellipsoid' in collider) {
         child = createEllipsoid(collider.ellipsoid, mat);
       } else if ('cylinder' in collider) {
-        console.log("PARSING CYLINDEER");
         child = createCylinder(collider.cylinder, mat);
       }
+
+      // Set position and rotation
       if (collider.rotation) {
-        // convert from z-up to y-up coordinate system
-        const rot = new THREE.Vector3(
-            collider.rotation.x, collider.rotation.y, collider.rotation.z);
+        // Convert from z-up to y-up coordinate system
+        const rot = new THREE.Vector3(collider.rotation.x, collider.rotation.y, collider.rotation.z);
         rot.multiplyScalar(Math.PI / 180);
         const eul = new THREE.Euler();
         eul.setFromVector3(rot);
@@ -235,12 +214,13 @@ function createScene(system) {
         child.quaternion.z = -tmp;
       }
       if (collider.position) {
-        child.position.set(
-            collider.position.x, collider.position.z, -collider.position.y);
+        child.position.set(collider.position.x, collider.position.z, -collider.position.y);
       }
+
       child.visible = !collider.hidden;
       parent.add(child);
     });
+
     scene.add(parent);
   });
 

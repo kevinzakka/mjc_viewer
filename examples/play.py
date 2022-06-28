@@ -1,3 +1,8 @@
+"""
+python examples/play.py --xml-path examples/humanoid.xml --html-path temp/traj.html --duration 1.5
+"""
+
+import pathlib
 from dataclasses import dataclass
 
 import dcargs
@@ -24,6 +29,8 @@ def main(args: Args) -> None:
     serializer = Serializer(model)
     trajectory = Trajectory(data)
 
+    # TODO(kevin): Visualize the initial state.
+
     # Simulate!
     trajectory.reset()
     while data.time < args.duration:
@@ -33,6 +40,7 @@ def main(args: Args) -> None:
         trajectory.step()
 
     # Dump as HTML.
+    pathlib.Path(args.html_path).parent.mkdir(parents=True, exist_ok=True)
     html = serializer.render(trajectory)
     with open(args.html_path, "w") as f:
         f.write(html)

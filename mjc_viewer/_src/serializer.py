@@ -20,6 +20,7 @@ _DEFAULT_GEOM_TYPE = "sphere"
 _DEFAULT_GEOM_RGBA = np.array([0.5, 0.5, 0.5, 1])
 _IDENTITY_QUAT = np.array([1.0, 0, 0, 0])
 
+# import {Viewer} from 'https://cdn.jsdelivr.net/gh/kevinzakka/mjc_viewer@main/mjc_viewer/_src/js/viewer.js';
 _HTML = """
 <html>
   <head>
@@ -42,7 +43,7 @@ _HTML = """
     </script>
     <div id="mujoco-viewer"></div>
     <script type="module">
-      import {Viewer} from 'https://cdn.jsdelivr.net/gh/kevinzakka/mjc_viewer@main/mjc_viewer/_src/js/viewer.js';
+      import {Viewer} from '../mjc_viewer/_src/js/viewer.js';
       const domElement = document.getElementById('mujoco-viewer');
       var viewer = new Viewer(domElement, system);
     </script>
@@ -105,7 +106,10 @@ def _quat_to_euler_degrees(quat: np.ndarray) -> np.ndarray:
 def _parse_sphere(sphere: MjcfElement, model: mujoco.MjModel) -> config_pb2.Collider:
     if sphere.size is None:
         commit_defaults(sphere)
-    radius = sphere.size[0]
+    size = sphere.size
+    if size is None:
+        raise ValueError(f"sphere elem {sphere.name} is missing a size attribute")
+    radius = size[0]
     position, _ = _pos_quat_from_model(sphere, model)
     return config_pb2.Collider(
         sphere=config_pb2.Collider.Sphere(radius=radius),
@@ -120,12 +124,14 @@ def _parse_capsule(
     if capsule.size is None:
         commit_defaults(capsule)
     size = capsule.size
+    if size is None:
+        raise ValueError(f"capsule elem {capsule.name} is missing a size attribute")
     radius = size[0]
     if capsule.fromto is not None:
         start = capsule.fromto[0:3]
         end = capsule.fromto[3:6]
         direction = end - start
-        length = np.linalg.norm(direction)
+        length = float(np.linalg.norm(direction))
     else:
         length = size[1] * 2
     if add_radius:
@@ -144,6 +150,8 @@ def _parse_box(box: MjcfElement, model: mujoco.MjModel) -> config_pb2.Collider:
     if box.size is None:
         commit_defaults(box)
     size = box.size
+    if size is None:
+        raise ValueError(f"box elem {box.name} is missing a size attribute")
     position, quat = _pos_quat_from_model(box, model)
     rot_euler = _quat_to_euler_degrees(quat)
     return config_pb2.Collider(
@@ -172,17 +180,16 @@ def _parse_mesh(mesh: MjcfElement, model: mujoco.MjModel) -> config_pb2.Collider
 
 
 def _parse_plane(plane: MjcfElement, model: mujoco.MjModel) -> config_pb2.Collider:
+    if plane.size is None:
+        commit_defaults(plane)
     size = plane.size
+    if size is None:
+        raise ValueError(f"plane elem {plane.name} is missing a size attribute")
     position, _ = _pos_quat_from_model(plane, model)
-    if plane.material.texrepeat is None:
-        repeat = 1
-    else:
-        repeat = plane.material.texrepeat[0]
     return config_pb2.Collider(
         plane=config_pb2.Collider.Plane(
             size=config_pb2.Vector3(x=size[0] * 2, y=size[1] * 2, z=size[2]),
             position=config_pb2.Vector3(x=position[0], y=position[1], z=position[2]),
-            repeat=repeat,
         ),
         material=_parse_material(plane),
     )
@@ -194,6 +201,8 @@ def _parse_ellipsoid(
     if ellipsoid.size is None:
         commit_defaults(ellipsoid)
     size = ellipsoid.size
+    if size is None:
+        raise ValueError(f"ellipsoid elem {ellipsoid.name} is missing a size attribute")
     position, quat = _pos_quat_from_model(ellipsoid, model)
     rot_euler = _quat_to_euler_degrees(quat)
     return config_pb2.Collider(
@@ -212,6 +221,8 @@ def _parse_cylinder(
     if cylinder.size is None:
         commit_defaults(cylinder)
     size = cylinder.size
+    if size is None:
+        raise ValueError(f"cylinder elem {cylinder.name} is missing a size attribute")
     position, quat = _pos_quat_from_model(cylinder, model)
     rot_euler = _quat_to_euler_degrees(quat)
     return config_pb2.Collider(
@@ -235,6 +246,10 @@ def _parse_material(elem: MjcfElement) -> config_pb2.Material:
             texture = elem.material.texture
             if texture.builtin is not None:
                 if texture.builtin == "checker":
+                    if elem.material.texrepeat is None:
+                        repeat = 1
+                    else:
+                        repeat = elem.material.texrepeat[0]
                     return config_pb2.Material(
                         texture=config_pb2.Texture(
                             type="checker",
@@ -243,6 +258,10 @@ def _parse_material(elem: MjcfElement) -> config_pb2.Material:
                             ),
                             color2=config_pb2.Vector3(
                                 x=texture.rgb2[0], y=texture.rgb2[1], z=texture.rgb2[2]
+                            ),
+                            repeat=repeat,
+                            size=config_pb2.Vector3(
+                                x=elem.size[0], y=elem.size[1], z=elem.size[2]
                             ),
                         ),
                     )
@@ -308,7 +327,7 @@ class Serializer:
         # Set simulation timestep.
         self._config.dt = self._mj_model.opt.timestep
 
-        # Add the bodies in depth-first order.
+        # Recursively add all the bodies, starting with the worldbody.
         self._add_body(self._mjcf_model.worldbody, None)
 
     def _add_body(self, body: MjcfElement, parent_body: Optional[MjcfElement]) -> None:
@@ -317,12 +336,6 @@ class Serializer:
 
         if not parent_body:
             _body.name = constants.WORLDBODY
-            _body.frozen.position.x = (
-                _body.frozen.position.y
-            ) = _body.frozen.position.z = 1
-            _body.frozen.rotation.x = (
-                _body.frozen.rotation.y
-            ) = _body.frozen.rotation.z = 1
         else:
             _body.name = body.name if body.name else f"body{body_idx}"
 

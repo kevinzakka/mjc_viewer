@@ -1,8 +1,3 @@
-/**
- * @fileoverview BraxViewer can render static trajectories from json and also
- * connect to a remote brax engine for interactive visualization.
- */
-
  import * as THREE from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r135/build/three.module.js';
  import {OrbitControls} from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r135/examples/jsm/controls/OrbitControls.js';
  import {GUI} from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r135/examples/jsm/libs/lil-gui.module.min.js';
@@ -10,32 +5,6 @@
  import {Animator} from './animator.js';
  import {Selector} from './selector.js';
  import {createScene, createTrajectory} from './system.js';
-
- function downloadDataUri(name, uri) {
-   let link = document.createElement('a');
-   link.download = name;
-   link.href = uri;
-   document.body.appendChild(link);
-   link.click();
-   document.body.removeChild(link);
- }
-
- function downloadFile(name, contents, mime) {
-   mime = mime || 'text/plain';
-   let blob = new Blob([contents], {type: mime});
-   let link = document.createElement('a');
-   document.body.appendChild(link);
-   link.download = name;
-   link.href = window.URL.createObjectURL(blob);
-   link.onclick = function(e) {
-     let scope = this;
-     setTimeout(function() {
-       window.URL.revokeObjectURL(scope.href);
-     }, 1500);
-   };
-   link.click();
-   link.remove();
- }
 
  const hoverMaterial =
      new THREE.MeshPhongMaterial({color: 0x332722, emissive: 0x114a67});
@@ -57,37 +26,46 @@
      this.domElement.appendChild(this.renderer.domElement);
 
      this.camera = new THREE.PerspectiveCamera(40, 1, 0.01, 100);
-     if (system.config.frozen?.position?.z) {
-       this.camera.position.set(0, 1, 0);
-     } else if (system.config.frozen?.position?.y) {
-       this.camera.position.set(0, 1, 2);
-     } else {
-       this.camera.position.set(5, 2, 8);
-     }
+     this.camera.position.set(0, 10, 5);
      this.camera.follow = true;
      this.camera.freezeAngle = false;
-     this.camera.followDistance = 10;
+     this.camera.followDistance = 5;
 
      this.scene.background = new THREE.Color(0xa0a0a0);
      this.scene.fog = new THREE.Fog(0xa0a0a0, 40, 60);
 
-     const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444);
-     hemiLight.position.set(0, 20, 0);
-     this.scene.add(hemiLight);
+     // ambient light
+    //  const light = new THREE.AmbientLight(0x404040, 0.5);
+    //  this.scene.add(light);
 
-     const dirLight = new THREE.DirectionalLight(0xffffff);
-     dirLight.position.set(3, 10, 10);
-     dirLight.castShadow = true;
-     dirLight.shadow.camera.top = 10;
-     dirLight.shadow.camera.bottom = -10;
-     dirLight.shadow.camera.left = -10;
-     dirLight.shadow.camera.right = 10;
-     dirLight.shadow.camera.near = 0.1;
-     dirLight.shadow.camera.far = 40;
-     dirLight.shadow.mapSize.width = 4096; // default is 512
-     dirLight.shadow.mapSize.height = 4096; // default is 512
-     this.scene.add(dirLight);
-     this.dirLight = dirLight;
+    // create a spotlight
+    this.spotLight = new THREE.SpotLight(0xffffff, 1);
+    this.spotLight.position.set(0, 4, 20);
+    this.spotLight.castShadow = true;
+    this.spotLight.shadow.camera.top = 10;
+    this.spotLight.shadow.camera.bottom = -10;
+    this.spotLight.shadow.camera.left = -10;
+    this.spotLight.shadow.camera.right = 10;
+    this.spotLight.shadow.camera.near = 0.1;
+    this.spotLight.shadow.camera.far = 40;
+    this.spotLight.shadow.mapSize.width = 4096;
+    this.spotLight.shadow.mapSize.height = 4096;
+    this.scene.add(this.spotLight);
+
+     // directional light
+    //  const dirLight = new THREE.DirectionalLight(0xffffff);
+    //  dirLight.position.set(3, 10, 10);
+    //  dirLight.castShadow = true;
+    //  dirLight.shadow.camera.top = 10;
+    //  dirLight.shadow.camera.bottom = -10;
+    //  dirLight.shadow.camera.left = -10;
+    //  dirLight.shadow.camera.right = 10;
+    //  dirLight.shadow.camera.near = 0.1;
+    //  dirLight.shadow.camera.far = 40;
+    //  dirLight.shadow.mapSize.width = 4096;
+    //  dirLight.shadow.mapSize.height = 4096;
+    //  this.scene.add(dirLight);
+    //  this.dirLight = dirLight;
 
      /* set up orbit controls */
      this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -143,9 +121,6 @@
            folder.add(c.rotation, 'z').name('rot.z'),
        );
      }
-     let saveFolder = this.gui.addFolder('Save / Capture');
-     saveFolder.add(this, 'saveScene').name('Save Scene');
-     saveFolder.add(this, 'saveImage').name('Capture Image');
 
      this.gui.close();
 
@@ -200,7 +175,7 @@
    }
 
    resizeCanvasToDisplaySize() {
-     //look up canvas size
+     // look up canvas size
      const width = this.domElement.clientWidth;
      const height = this.domElement.clientHeight;
      this.setSize(width, height);
@@ -236,8 +211,8 @@
      }
 
      // make sure target stays within shadow map region
-     this.dirLight.position.set(targetPos.x + 3, targetPos.y + 10, targetPos.z + 10);
-     this.dirLight.target = this.target;
+    //  this.dirLight.position.set(targetPos.x + 3, targetPos.y + 10, targetPos.z + 10);
+    //  this.dirLight.target = this.target;
 
      if (this.controls.update()) {
        this.setDirty();
@@ -255,20 +230,9 @@
      }
      this.controlTargetPos.copy(this.controls.target);
 
-
      if (this.needsRender) {
        this.render();
      }
-   }
-
-   saveImage() {
-     this.render();
-     const imageData = this.renderer.domElement.toDataURL();
-     downloadDataUri('brax.png', imageData);
-   }
-
-   saveScene() {
-     downloadFile('system.json', JSON.stringify(this.system));
    }
 
    setHover(object, hovering) {

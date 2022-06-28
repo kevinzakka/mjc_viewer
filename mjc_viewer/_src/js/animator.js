@@ -72,7 +72,7 @@ class Animator {
       options.play = true;
     }
     if (options.loop == undefined) {
-      options.loop = true;
+      options.loop = false;
     }
     if (options.clampWhenFinished === undefined) {
       options.clampWhenFinished = true;

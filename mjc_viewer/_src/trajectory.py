@@ -42,3 +42,6 @@ class Trajectory:
     @property
     def rotations(self) -> List[np.ndarray]:
         return [frame.xquat for frame in self._frames]
+
+    def __len__(self) -> int:
+        return len(self._frames)
