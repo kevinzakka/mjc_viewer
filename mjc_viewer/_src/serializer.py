@@ -20,7 +20,6 @@ _DEFAULT_GEOM_TYPE = "sphere"
 _DEFAULT_GEOM_RGBA = np.array([0.5, 0.5, 0.5, 1])
 _IDENTITY_QUAT = np.array([1.0, 0, 0, 0])
 
-# import {Viewer} from 'https://cdn.jsdelivr.net/gh/kevinzakka/mjc_viewer@main/mjc_viewer/_src/js/viewer.js';
 _HTML = """
 <html>
   <head>
@@ -43,7 +42,7 @@ _HTML = """
     </script>
     <div id="mujoco-viewer"></div>
     <script type="module">
-      import {Viewer} from '../mjc_viewer/_src/js/viewer.js';
+      import {Viewer} from 'https://cdn.jsdelivr.net/gh/kevinzakka/mjc_viewer@main/mjc_viewer/_src/js/viewer.js';
       const domElement = document.getElementById('mujoco-viewer');
       var viewer = new Viewer(domElement, system);
     </script>
