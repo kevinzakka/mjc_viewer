@@ -51,7 +51,7 @@ with open("traj.html", "w") as f:
 
 - [ ] Robustify XML parser
 - [ ] Parse lights
-- [ ] Add support for meshes
+- [ ] Add support for meshes and height fields
 - [ ] Better default camera / light settings
 - [ ] Figure out plane reflection
 - [ ] Someday, make it interactive

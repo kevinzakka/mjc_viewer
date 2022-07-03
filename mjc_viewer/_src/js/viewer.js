@@ -1,275 +1,277 @@
- import * as THREE from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r135/build/three.module.js';
- import {OrbitControls} from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r135/examples/jsm/controls/OrbitControls.js';
- import {GUI} from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r135/examples/jsm/libs/lil-gui.module.min.js';
+import * as THREE from "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r135/build/three.module.js";
+import { OrbitControls } from "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r135/examples/jsm/controls/OrbitControls.js";
+import { GUI } from "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r135/examples/jsm/libs/lil-gui.module.min.js";
 
- import {Animator} from './animator.js';
- import {Selector} from './selector.js';
- import {createScene, createTrajectory} from './system.js';
+import { Animator } from "./animator.js";
+import { Selector } from "./selector.js";
+import { createScene, createTrajectory } from "./system.js";
 
- const hoverMaterial =
-     new THREE.MeshPhongMaterial({color: 0x332722, emissive: 0x114a67});
- const selectMaterial = new THREE.MeshPhongMaterial({color: 0x2194ce});
+const hoverMaterial = new THREE.MeshPhongMaterial({
+  color: 0x332722,
+  emissive: 0x114a67,
+});
+const selectMaterial = new THREE.MeshPhongMaterial({ color: 0x2194ce });
 
- class Viewer {
-   constructor(domElement, system) {
-     this.domElement = domElement;
-     this.system = system;
-     this.scene = createScene(system);
-     this.trajectory = createTrajectory(system);
+class Viewer {
+  constructor(domElement, system) {
+    this.domElement = domElement;
+    this.system = system;
+    this.scene = createScene(system);
+    this.trajectory = createTrajectory(system);
 
-     /* set up renderer, camera, and add default scene elements */
-     this.renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
-     this.renderer.setPixelRatio(window.devicePixelRatio);
-     this.renderer.shadowMap.enabled = true;
-     this.renderer.outputEncoding = THREE.sRGBEncoding;
+    /* set up renderer, camera, and add default scene elements */
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.outputEncoding = THREE.sRGBEncoding;
 
-     this.domElement.appendChild(this.renderer.domElement);
+    this.domElement.appendChild(this.renderer.domElement);
 
-     this.camera = new THREE.PerspectiveCamera(40, 1, 0.01, 100);
-     this.camera.position.set(0, 10, 5);
-     this.camera.follow = true;
-     this.camera.freezeAngle = false;
-     this.camera.followDistance = 5;
+    // perspective camera
+    this.camera = new THREE.PerspectiveCamera(40, 1, 0.01, 100);
+    this.camera.position.set(0, 10, 5);
+    this.camera.follow = true;
+    this.camera.freezeAngle = false;
+    this.camera.followDistance = 8;
 
-     this.scene.background = new THREE.Color(0xa0a0a0);
-     this.scene.fog = new THREE.Fog(0xa0a0a0, 40, 60);
+    this.scene.background = new THREE.Color(0xa0a0a0);
+    this.scene.fog = new THREE.Fog(0xa0a0a0, 40, 60);
 
-     // ambient light
-    //  const light = new THREE.AmbientLight(0x404040, 0.5);
-    //  this.scene.add(light);
+    const dirLight = new THREE.DirectionalLight(0xffffff);
+    dirLight.position.set(3, 10, 10);
+    dirLight.castShadow = true;
+    dirLight.shadow.camera.top = 10;
+    dirLight.shadow.camera.bottom = -10;
+    dirLight.shadow.camera.left = -10;
+    dirLight.shadow.camera.right = 10;
+    dirLight.shadow.camera.near = 0.1;
+    dirLight.shadow.camera.far = 40;
+    dirLight.shadow.mapSize.width = 4096; // default is 512
+    dirLight.shadow.mapSize.height = 4096; // default is 512
+    this.scene.add(dirLight);
+    this.dirLight = dirLight;
 
-    // create a spotlight
-    this.spotLight = new THREE.SpotLight(0xffffff, 1);
-    this.spotLight.position.set(0, 4, 20);
-    this.spotLight.castShadow = true;
-    this.spotLight.shadow.camera.top = 10;
-    this.spotLight.shadow.camera.bottom = -10;
-    this.spotLight.shadow.camera.left = -10;
-    this.spotLight.shadow.camera.right = 10;
-    this.spotLight.shadow.camera.near = 0.1;
-    this.spotLight.shadow.camera.far = 40;
-    this.spotLight.shadow.mapSize.width = 4096;
-    this.spotLight.shadow.mapSize.height = 4096;
-    this.scene.add(this.spotLight);
+    /* set up orbit controls */
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.enablePan = false;
+    this.controls.enableDamping = true;
+    this.controls.addEventListener("start", () => {
+      this.setDirty();
+    });
+    this.controls.addEventListener("change", () => {
+      this.setDirty();
+    });
+    this.controlTargetPos = this.controls.target.clone();
 
-     // directional light
-    //  const dirLight = new THREE.DirectionalLight(0xffffff);
-    //  dirLight.position.set(3, 10, 10);
-    //  dirLight.castShadow = true;
-    //  dirLight.shadow.camera.top = 10;
-    //  dirLight.shadow.camera.bottom = -10;
-    //  dirLight.shadow.camera.left = -10;
-    //  dirLight.shadow.camera.right = 10;
-    //  dirLight.shadow.camera.near = 0.1;
-    //  dirLight.shadow.camera.far = 40;
-    //  dirLight.shadow.mapSize.width = 4096;
-    //  dirLight.shadow.mapSize.height = 4096;
-    //  this.scene.add(dirLight);
-    //  this.dirLight = dirLight;
+    /* set up gui */
+    this.gui = new GUI({ autoPlace: false });
+    this.domElement.parentElement.appendChild(this.gui.domElement);
+    this.gui.domElement.style.position = "absolute";
+    this.gui.domElement.style.right = 0;
+    this.gui.domElement.style.top = 0;
 
-     /* set up orbit controls */
-     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-     this.controls.enablePan = false;
-     this.controls.enableDamping = true;
-     this.controls.addEventListener('start', () => {this.setDirty();});
-     this.controls.addEventListener('change', () => {this.setDirty();});
-     this.controlTargetPos = this.controls.target.clone();
+    /* add camera inspectors */
+    const cameraFolder = this.gui.addFolder("Camera");
+    cameraFolder.add(this.camera, "freezeAngle").name("Freeze Angle");
+    cameraFolder.add(this.camera, "follow").name("Follow Target");
+    cameraFolder
+      .add(this.camera, "followDistance")
+      .name("Follow Distance")
+      .min(1)
+      .max(50);
 
-     /* set up gui */
-     this.gui = new GUI({autoPlace: false});
-     this.domElement.parentElement.appendChild(this.gui.domElement);
-     this.gui.domElement.style.position = 'absolute';
-     this.gui.domElement.style.right = 0;
-     this.gui.domElement.style.top = 0;
+    /* set up animator and load trajectory */
+    this.animator = new Animator(this);
+    this.animator.load(this.trajectory, {});
 
-     /* add camera inspectors */
-     const cameraFolder = this.gui.addFolder('Camera');
-     cameraFolder.add(this.camera, 'freezeAngle').name('Freeze Angle');
-     cameraFolder.add(this.camera, 'follow').name('Follow Target');
-     cameraFolder.add(this.camera, 'followDistance')
-         .name('Follow Distance')
-         .min(1)
-         .max(50);
+    /* add body insepctors */
+    const bodiesFolder = this.gui.addFolder("Bodies");
+    bodiesFolder.close();
 
-     /* set up animator and load trajectory */
-     this.animator = new Animator(this);
-     this.animator.load(this.trajectory, {});
+    this.bodyFolders = {};
 
-     /* add body insepctors */
-     const bodiesFolder = this.gui.addFolder('Bodies');
-     bodiesFolder.close();
+    for (let c of this.scene.children) {
+      if (!c.name) continue;
+      const folder = bodiesFolder.addFolder(c.name);
+      this.bodyFolders[c.name] = folder;
+      folder.close();
 
-     this.bodyFolders = {};
+      function defaults() {
+        for (const gui of arguments) {
+          gui.step(0.01).listen().domElement.style.pointerEvents = "none";
+        }
+      }
+      defaults(
+        folder.add(c.position, "x").name("pos.x"),
+        folder.add(c.position, "y").name("pos.y"),
+        folder.add(c.position, "z").name("pos.z"),
+        folder.add(c.rotation, "x").name("rot.x"),
+        folder.add(c.rotation, "y").name("rot.y"),
+        folder.add(c.rotation, "z").name("rot.z")
+      );
+    }
 
-     for (let c of this.scene.children) {
-       if (!c.name) continue;
-       const folder = bodiesFolder.addFolder(c.name);
-       this.bodyFolders[c.name] = folder;
-       folder.close();
+    this.gui.close();
 
-       function defaults() {
-         for (const gui of arguments) {
-           gui.step(0.01).listen().domElement.style.pointerEvents = 'none';
-         }
-       }
-       defaults(
-           folder.add(c.position, 'x').name('pos.x'),
-           folder.add(c.position, 'y').name('pos.y'),
-           folder.add(c.position, 'z').name('pos.z'),
-           folder.add(c.rotation, 'x').name('rot.x'),
-           folder.add(c.rotation, 'y').name('rot.y'),
-           folder.add(c.rotation, 'z').name('rot.z'),
-       );
-     }
+    /* set up body selector */
+    this.selector = new Selector(this);
+    this.selector.addEventListener("hoveron", (evt) =>
+      this.setHover(evt.object, true)
+    );
+    this.selector.addEventListener("hoveroff", (evt) =>
+      this.setHover(evt.object, false)
+    );
+    this.selector.addEventListener("select", (evt) =>
+      this.setSelected(evt.object, true)
+    );
+    this.selector.addEventListener("deselect", (evt) =>
+      this.setSelected(evt.object, false)
+    );
 
-     this.gui.close();
+    this.defaultTarget = this.selector.selectable[0];
+    this.target = this.defaultTarget;
 
-     /* set up body selector */
-     this.selector = new Selector(this);
-     this.selector.addEventListener(
-         'hoveron', (evt) => this.setHover(evt.object, true));
-     this.selector.addEventListener(
-         'hoveroff', (evt) => this.setHover(evt.object, false));
-     this.selector.addEventListener(
-         'select', (evt) => this.setSelected(evt.object, true));
-     this.selector.addEventListener(
-         'deselect', (evt) => this.setSelected(evt.object, false));
+    /* get ready to render first frame */
+    this.setDirty();
 
-     this.defaultTarget = this.selector.selectable[0];
-     this.target = this.defaultTarget;
+    window.onload = (evt) => this.setSize();
+    window.addEventListener("resize", (evt) => this.setSize(), false);
+    requestAnimationFrame(() => this.setSize());
 
-     /* get ready to render first frame */
-     this.setDirty();
+    const resizeObserver = new ResizeObserver(() =>
+      this.resizeCanvasToDisplaySize()
+    );
+    resizeObserver.observe(this.domElement, { box: "content-box" });
 
-     window.onload = (evt) => this.setSize();
-     window.addEventListener('resize', (evt) => this.setSize(), false);
-     requestAnimationFrame(() => this.setSize());
+    /* start animation */
+    this.animate();
+  }
 
-     const resizeObserver = new ResizeObserver(() => this.resizeCanvasToDisplaySize());
-     resizeObserver.observe(this.domElement, {box: 'content-box'});
+  setDirty() {
+    this.needsRender = true;
+  }
 
-     /* start animation */
-     this.animate();
-   }
+  setSize(w, h) {
+    if (w === undefined) {
+      w = this.domElement.offsetWidth;
+    }
+    if (h === undefined) {
+      h = this.domElement.clientHeight;
+    }
+    if (this.camera.type == "OrthographicCamera") {
+      this.camera.right =
+        this.camera.left + (w * (this.camera.top - this.camera.bottom)) / h;
+    } else {
+      this.camera.aspect = w / h;
+    }
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(w, h);
+    this.setDirty();
+  }
 
-   setDirty() {
-     this.needsRender = true;
-   }
+  resizeCanvasToDisplaySize() {
+    // look up canvas size
+    const width = this.domElement.clientWidth;
+    const height = this.domElement.clientHeight;
+    this.setSize(width, height);
+  }
 
-   setSize(w, h) {
-     if (w === undefined) {
-       w = this.domElement.offsetWidth;
-     }
-     if (h === undefined) {
-       h = this.domElement.clientHeight;
-     }
-     if (this.camera.type == 'OrthographicCamera') {
-       this.camera.right =
-           this.camera.left + w * (this.camera.top - this.camera.bottom) / h;
-     } else {
-       this.camera.aspect = w / h;
-     }
-     this.camera.updateProjectionMatrix();
-     this.renderer.setSize(w, h);
-     this.setDirty();
-   }
+  render() {
+    this.renderer.render(this.scene, this.camera);
+    this.needsRender = false;
+  }
 
-   resizeCanvasToDisplaySize() {
-     // look up canvas size
-     const width = this.domElement.clientWidth;
-     const height = this.domElement.clientHeight;
-     this.setSize(width, height);
-   }
+  animate() {
+    requestAnimationFrame(() => this.animate());
+    this.animator.update();
 
-   render() {
-     this.renderer.render(this.scene, this.camera);
-     this.needsRender = false;
-   }
+    // make sure the orbiter is pointed at the right target
+    const targetPos = new THREE.Vector3();
+    this.target.getWorldPosition(targetPos);
 
-   animate() {
-     requestAnimationFrame(() => this.animate());
-     this.animator.update();
+    // if the target gets too far from the camera, nudge the camera
+    if (this.camera.follow) {
+      this.controls.target.lerp(targetPos, 0.1);
+      if (
+        this.camera.position.distanceTo(this.controls.target) >
+        this.camera.followDistance
+      ) {
+        const followBehind = this.controls.target
+          .clone()
+          .sub(this.camera.position)
+          .normalize()
+          .multiplyScalar(this.camera.followDistance)
+          .sub(this.controls.target)
+          .negate();
+        this.camera.position.lerp(followBehind, 0.5);
+        this.setDirty();
+      }
+    }
 
-     // make sure the orbiter is pointed at the right target
-     const targetPos = new THREE.Vector3();
-     this.target.getWorldPosition(targetPos);
+    // make sure target stays within shadow map region
+    this.dirLight.position.set(
+      targetPos.x + 3,
+      targetPos.y + 10,
+      targetPos.z + 10
+    );
+    this.dirLight.target = this.target;
 
-     // if the target gets too far from the camera, nudge the camera
-     if (this.camera.follow) {
-       this.controls.target.lerp(targetPos, 0.1);
-       if (this.camera.position.distanceTo(this.controls.target) >
-           this.camera.followDistance) {
-         const followBehind = this.controls.target.clone()
-                                  .sub(this.camera.position)
-                                  .normalize()
-                                  .multiplyScalar(this.camera.followDistance)
-                                  .sub(this.controls.target)
-                                  .negate();
-         this.camera.position.lerp(followBehind, 0.5);
-         this.setDirty();
-       }
-     }
+    if (this.controls.update()) {
+      this.setDirty();
+    }
 
-     // make sure target stays within shadow map region
-    //  this.dirLight.position.set(targetPos.x + 3, targetPos.y + 10, targetPos.z + 10);
-    //  this.dirLight.target = this.target;
+    // if freezeAngle requested, move the camera on xz plane to match target
+    if (this.camera.freezeAngle) {
+      const off = new THREE.Vector3();
+      off.add(this.controls.target).sub(this.controlTargetPos);
+      off.setComponent(1, 0);
+      if (off.lengthSq() > 0) {
+        this.camera.position.add(off);
+        this.setDirty();
+      }
+    }
+    this.controlTargetPos.copy(this.controls.target);
 
-     if (this.controls.update()) {
-       this.setDirty();
-     }
+    if (this.needsRender) {
+      this.render();
+    }
+  }
 
-     // if freezeAngle requested, move the camera on xz plane to match target
-     if (this.camera.freezeAngle) {
-       const off = new THREE.Vector3();
-       off.add(this.controls.target).sub(this.controlTargetPos);
-       off.setComponent(1, 0);
-       if (off.lengthSq() > 0) {
-         this.camera.position.add(off);
-         this.setDirty();
-       }
-     }
-     this.controlTargetPos.copy(this.controls.target);
+  setHover(object, hovering) {
+    this.setDirty();
+    if (!object.selected) {
+      object.traverse(function (child) {
+        if (child instanceof THREE.Mesh) {
+          child.material = hovering ? hoverMaterial : child.baseMaterial;
+        }
+      });
+    }
+    if (object.name in this.bodyFolders) {
+      const titleElement =
+        this.bodyFolders[object.name].domElement.querySelector(".title");
+      if (titleElement) {
+        titleElement.style.backgroundColor = hovering ? "#2fa1d6" : "#000";
+      }
+    }
+  }
 
-     if (this.needsRender) {
-       this.render();
-     }
-   }
+  setSelected(object, selected) {
+    object.selected = selected;
+    this.target = selected ? object : this.defaultTarget;
+    object.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.material = selected ? selectMaterial : child.baseMaterial;
+      }
+    });
+    if (object.name in this.bodyFolders) {
+      if (object.selected) {
+        this.bodyFolders[object.name].open();
+      } else {
+        this.bodyFolders[object.name].close();
+      }
+    }
+    this.setDirty();
+  }
+}
 
-   setHover(object, hovering) {
-     this.setDirty();
-     if (!object.selected) {
-       object.traverse(function(child) {
-         if (child instanceof THREE.Mesh) {
-           child.material = hovering ? hoverMaterial : child.baseMaterial;
-         }
-       });
-     }
-     if (object.name in this.bodyFolders) {
-       const titleElement =
-           this.bodyFolders[object.name].domElement.querySelector('.title');
-       if (titleElement) {
-         titleElement.style.backgroundColor = hovering ? '#2fa1d6' : '#000';
-       }
-     }
-   }
-
-   setSelected(object, selected) {
-     object.selected = selected;
-     this.target = selected ? object : this.defaultTarget;
-     object.traverse((child) => {
-       if (child instanceof THREE.Mesh) {
-         child.material = selected ? selectMaterial : child.baseMaterial;
-       }
-     });
-     if (object.name in this.bodyFolders) {
-       if (object.selected) {
-         this.bodyFolders[object.name].open();
-       } else {
-         this.bodyFolders[object.name].close();
-       }
-     }
-     this.setDirty();
-   }
- }
-
- export {Viewer};
+export { Viewer };

@@ -20,7 +20,6 @@ _DEFAULT_GEOM_TYPE = "sphere"
 _DEFAULT_GEOM_RGBA = np.array([0.5, 0.5, 0.5, 1])
 _IDENTITY_QUAT = np.array([1.0, 0, 0, 0])
 
-# import {Viewer} from 'https://cdn.jsdelivr.net/gh/kevinzakka/mjc_viewer@main/mjc_viewer/_src/js/viewer.js';
 _HTML = """
 <html>
   <head>
@@ -43,7 +42,7 @@ _HTML = """
     </script>
     <div id="mujoco-viewer"></div>
     <script type="module">
-      import {Viewer} from '../mjc_viewer/_src/js/viewer.js';
+      import {Viewer} from 'https://cdn.jsdelivr.net/gh/kevinzakka/mjc_viewer@main/mjc_viewer/_src/js/viewer.js';
       const domElement = document.getElementById('mujoco-viewer');
       var viewer = new Viewer(domElement, system);
     </script>
@@ -279,11 +278,9 @@ def _parse_material(elem: MjcfElement) -> config_pb2.Material:
     # If no material is specified, it could be that solely an rgba attribute was
     # specified. If we don't have one, then we'll just assign the default color.
     rgba = _DEFAULT_GEOM_RGBA if elem.rgba is None else elem.rgba
-    rgb = rgba[0:3]
-    alpha = rgba[3]
     return config_pb2.Material(
-        color=config_pb2.Vector3(x=rgb[0], y=rgb[1], z=rgb[2]),
-        alpha=alpha,
+        color=config_pb2.Vector3(x=rgba[0], y=rgba[1], z=rgba[2]),
+        alpha=rgba[3],
     )
 
 

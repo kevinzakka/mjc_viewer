@@ -1,7 +1,6 @@
-import * as THREE from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r135/build/three.module.js';
+import * as THREE from "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r135/build/three.module.js";
 
 class Animator {
-
   constructor(viewer) {
     this.viewer = viewer;
     this.mixer = new THREE.AnimationMixer(this.viewer.scene);
@@ -72,7 +71,7 @@ class Animator {
       options.play = true;
     }
     if (options.loop == undefined) {
-      options.loop = false;
+      options.loop = true;
     }
     if (options.clampWhenFinished === undefined) {
       options.clampWhenFinished = true;
@@ -86,15 +85,21 @@ class Animator {
     this.duration = trajectory.duration;
 
     if (this.duration > 0) {
-      this.folder = this.viewer.gui.addFolder('Trajectory');
+      this.folder = this.viewer.gui.addFolder("Trajectory");
       this.folder.open();
-      this.folder.add(this, 'playPause').name('Play / Pause');
-      this.folder.add(this, 'reset').name('Reset');
+      this.folder.add(this, "playPause").name("Play / Pause");
+      this.folder.add(this, "reset").name("Reset");
 
-      this.timeScrubber = this.folder.add(this, 'time', 0, this.duration, 0.001);
+      this.timeScrubber = this.folder.add(
+        this,
+        "time",
+        0,
+        this.duration,
+        0.001
+      );
       this.timeScrubber.onChange((value) => this.seek(value));
-      this.folder.add(this.mixer, 'timeScale').step(0.01).min(0);
-      this.folder.add(this, 'loop').onChange((value) => this.setLoop(value));
+      this.folder.add(this.mixer, "timeScale").step(0.01).min(0);
+      this.folder.add(this, "loop").onChange((value) => this.setLoop(value));
     }
 
     this.reset();

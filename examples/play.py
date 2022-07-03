@@ -29,8 +29,6 @@ def main(args: Args) -> None:
     serializer = Serializer(model)
     trajectory = Trajectory(data)
 
-    # TODO(kevin): Visualize the initial state.
-
     # Simulate!
     trajectory.reset()
     while data.time < args.duration:
